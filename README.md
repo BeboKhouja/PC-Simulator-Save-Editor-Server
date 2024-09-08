@@ -9,6 +9,7 @@ A server software to decrypt PC Simulator saves. Deploy to Google Cloud, AWS, Az
 | RAM     | 512 MB                                                | 16GB        |
 | Network | At least 10Mbps                                       | 100Mbps     |
 
+When buying a server for this purpose, you should prioritize more on the RAM.
 # Using
 
 - Create a socket using port 60537:

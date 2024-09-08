@@ -3,6 +3,7 @@ package com.mokkachocolata.pcsimsaveeditorserver;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -29,10 +30,6 @@ public class ServerClass {
         }
         return stringBuilder.toString();
     }
-    private static void closeSockets() throws IOException {
-        input.close();
-        output.close();
-    }
     private static void readMessage(DataInputStream input, DataOutputStream output) throws IOException {
         String clientMessage = input.readUTF();
         String out = Decrypt(clientMessage);
@@ -41,19 +38,23 @@ public class ServerClass {
         output.writeUTF(out);
     }
     private static void startServer(int port) throws IOException {
-        ServerSocket socket = new ServerSocket(port);
+        ServerSocket socket = new ServerSocket(port, 0, InetAddress.getByName(InetAddress.getLocalHost().getHostAddress()));
+        System.out.println("URL: " + socket.getInetAddress().getHostAddress() + ":" + socket.getLocalPort());
         System.out.println("Waiting for clients to connect...");
-        Socket clientSock = socket.accept();
-        output = new DataOutputStream(clientSock.getOutputStream());
-        input = new DataInputStream(clientSock.getInputStream());
-        String clientIP = clientSock.getInetAddress().toString();
-        int clientPort = clientSock.getPort();
-        System.out.println("Connection established: IP=" + clientIP + " Port=" + clientPort);
-        readMessage(input, output);
-        socket.close();
-        clientSock.close();
-        closeSockets();
-        startServer(port);
+        while(true) {
+            Socket clientSock = socket.accept();
+            new Thread(() -> {
+                try {
+                    output = new DataOutputStream(clientSock.getOutputStream());
+                    input = new DataInputStream(clientSock.getInputStream());
+                    String clientIP = clientSock.getInetAddress().toString();
+                    int clientPort = clientSock.getPort();
+                    System.out.println("Connection established: IP=" + clientIP + " Port=" + clientPort);
+                    readMessage(input, output);
+                    clientSock.close();
+                } catch (Exception ignored) {}
+            }).start();
+        }
     }
     public static void main(String[] args) throws IOException {
         Thread.setDefaultUncaughtExceptionHandler(new CrashHandler());
